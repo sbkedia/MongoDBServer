@@ -37,15 +37,19 @@ import java.util.Date;
  * two kinds of Post Requests - Add User after registration and add tracking
  * information from the application
  */
-@WebServlet(name = "MongoDBAdd", urlPatterns = {"/MongoDBAdd/*"})
+@WebServlet(name = "MongoDBAdd", urlPatterns = {"/MongoDBAdd/"})
 public class MongoDBAdd extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
+            
+        System.out.println(request.getRequestURI());
+        System.out.println(request.getPathInfo());
+        System.out.println(request.getParameter("csvString"));
         // Get path info to invoke the appropriate method
-        String check = request.getPathInfo().toString().substring(1);
+//        String check = request.getPathInfo().toString().substring(1);
+        String check = request.getParameter("csvString");
         List<String> StringParse = Arrays.asList(check.split("&"));
         LogDetails ld = new LogDetails();
         DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
@@ -53,16 +57,16 @@ public class MongoDBAdd extends HttpServlet {
 
         // When time tracking - Get the appropriate subset of data from MongoDB
         if (StringParse.get(0).equals("FetchUser")) {
-            String content = StringParse.get(1) + "&" + StringParse.get(2);
+            String content = StringParse.get(1) + "," + StringParse.get(2);
             String str1 = StringParse.get(1);
             String str2 = StringParse.get(2);
             List<String> l1 = FetchUser(str1, str2);
 
             // Create log
-            ld.setUserID(StringParse.get(2));
-            ld.setModel(StringParse.get(3));
-            ld.setManufacturer(StringParse.get(4));
-            ld.setVersionRelease(StringParse.get(5));
+            ld.setUserID(StringParse.get(3));
+            ld.setModel(StringParse.get(4));
+            ld.setManufacturer(StringParse.get(5));
+            ld.setVersionRelease(StringParse.get(6));
             ld.setRequestType("Get");
             ld.setContent(content);
             ld.setTimestamp(dateFormat.format(date));
@@ -89,16 +93,19 @@ public class MongoDBAdd extends HttpServlet {
 
         //When loging in - Authenticating the user
         if (StringParse.get(0).equals("Login")) {
+            System.out.println("In Login");
             String content = StringParse.get(1) + "&" + StringParse.get(2);
             String str1 = StringParse.get(1);
             String str2 = StringParse.get(2);
             String result = Login(str1, str2);
+            
+            System.out.println("Got result");
 
             // Create log
-            ld.setUserID(StringParse.get(2));
-            ld.setModel(StringParse.get(3));
-            ld.setManufacturer(StringParse.get(4));
-            ld.setVersionRelease(StringParse.get(5));
+            ld.setUserID(StringParse.get(3));
+            ld.setModel(StringParse.get(4));
+            ld.setManufacturer(StringParse.get(5));
+            ld.setVersionRelease(StringParse.get(6));
             ld.setRequestType("Get");
             ld.setContent(content);
             ld.setTimestamp(dateFormat.format(date));
