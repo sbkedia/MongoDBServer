@@ -32,12 +32,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * This the web service for our application There are two kinds of Get Requests -
- * Login Authentication and Time Tracking screen of the algorithm There are two
- * kinds of Post Requests - Add User after registration and add tracking
+ * This the web service for our application There are two kinds of Get Requests
+ * - Login Authentication and Time Tracking screen of the algorithm There are
+ * two kinds of Post Requests - Add User after registration and add tracking
  * information from the application
  */
-
 @WebServlet(name = "MongoDBAdd", urlPatterns = {"/MongoDBAdd/*"})
 public class MongoDBAdd extends HttpServlet {
 
@@ -48,17 +47,33 @@ public class MongoDBAdd extends HttpServlet {
         // Get path info to invoke the appropriate method
         String check = request.getPathInfo().toString().substring(1);
         List<String> StringParse = Arrays.asList(check.split("&"));
+        LogDetails ld = new LogDetails();
+        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+        Date date = new Date();
 
         // When time tracking - Get the appropriate subset of data from MongoDB
         if (StringParse.get(0).equals("FetchUser")) {
+            String content = StringParse.get(1) + "&" + StringParse.get(2);
             String str1 = StringParse.get(1);
             String str2 = StringParse.get(2);
             List<String> l1 = FetchUser(str1, str2);
+
+            // Create log
+            ld.setUserID(StringParse.get(2));
+            ld.setModel(StringParse.get(3));
+            ld.setManufacturer(StringParse.get(4));
+            ld.setVersionRelease(StringParse.get(5));
+            ld.setRequestType("Get");
+            ld.setContent(content);
+            ld.setTimestamp(dateFormat.format(date));
+            ld.setServerMethodCalled("FetchUser");
+            createLog(ld);
+
             PrintWriter out = response.getWriter();
             out.println(String.join(",", l1));// The resultant dataset
         }
-        
-        if  (check.equals("Operational")){
+
+        if (check.equals("Operational")) {
             List<String> l3 = FetchAll();
             PrintWriter out = response.getWriter();
             out.println(l3.toString());
@@ -67,9 +82,23 @@ public class MongoDBAdd extends HttpServlet {
 
         //When loging in - Authenticating the user
         if (StringParse.get(0).equals("Login")) {
+            String content = StringParse.get(1) + "&" + StringParse.get(2);
             String str1 = StringParse.get(1);
             String str2 = StringParse.get(2);
             String result = Login(str1, str2);
+
+            // Create log
+            ld.setUserID(StringParse.get(2));
+            ld.setModel(StringParse.get(3));
+            ld.setManufacturer(StringParse.get(4));
+            ld.setVersionRelease(StringParse.get(5));
+            ld.setRequestType("Get");
+            ld.setContent(content);
+            ld.setTimestamp(dateFormat.format(date));
+            ld.setServerMethodCalled("Login");
+            createLog(ld);
+            
+            //Send back to client
             PrintWriter out = response.getWriter();
             out.println(result);// Sending the appropriate message
 
@@ -102,6 +131,7 @@ public class MongoDBAdd extends HttpServlet {
 
         // When a new user registers
         if (StringParse.get(0).equals("AddUser")) {
+            String content = StringParse.get(1) + "," + StringParse.get(2) + "," + StringParse.get(3) + "," + StringParse.get(4) + "," + StringParse.get(5);
             // Parse to obtain First Name, Last Name, email, password, role
             u.setFName(StringParse.get(1));
             u.setLName(StringParse.get(2));
@@ -110,28 +140,38 @@ public class MongoDBAdd extends HttpServlet {
             u.setRole(StringParse.get(5));
             // Add to MongoDB
             AddUser(u);
-            
+
             // Create log
             ld.setUserID(StringParse.get(6));
             ld.setModel(StringParse.get(7));
             ld.setManufacturer(StringParse.get(8));
             ld.setVersionRelease(StringParse.get(9));
             ld.setRequestType("Post");
-            ld.setContent(csvString);
+            ld.setContent(content);
             ld.setTimestamp(dateFormat.format(date));
             ld.setServerMethodCalled("AddUser");
-            
-//            createLog(ld);
+            createLog(ld);
         }
         // When a logged in user starts the time tracker
         if (StringParse.get(0).equals("AddTrack")) {
-
+            String content = StringParse.get(1) + "," + StringParse.get(2) + "," + StringParse.get(3) + "," + StringParse.get(4);
             t.setuserID(StringParse.get(1));
-            t.setDate(StringParse.get(3));
             t.setTime(StringParse.get(2));
+            t.setDate(StringParse.get(3));
             t.setMovement(StringParse.get(4));
             // Add information to time tracker
             AddTrack(t);
+
+            // Create log
+            ld.setUserID(StringParse.get(5));
+            ld.setModel(StringParse.get(6));
+            ld.setManufacturer(StringParse.get(7));
+            ld.setVersionRelease(StringParse.get(8));
+            ld.setRequestType("Post");
+            ld.setContent(content);
+            ld.setTimestamp(dateFormat.format(date));
+            ld.setServerMethodCalled("AddTrack");
+            createLog(ld);
         }
     }
 
@@ -144,7 +184,7 @@ public class MongoDBAdd extends HttpServlet {
     public String getServletInfo() {
         return "Short description";
     }
-    
+
     // MongoDB connection
     public static MongoDatabase DBConnection() {
         //Connect to MongoDB server
@@ -156,7 +196,7 @@ public class MongoDBAdd extends HttpServlet {
         MongoDatabase db = client.getDatabase("ahn_mobile_app");
         return db;
     }
-    
+
     //Method to add user
     public void AddUser(UserInfo userInfo) {
         MongoDatabase db = DBConnection();
@@ -171,6 +211,7 @@ public class MongoDBAdd extends HttpServlet {
 
         user_info.insertOne(doc);
     }
+
     //Method to add traking information
     public void AddTrack(Track track) {
         MongoDatabase db = DBConnection();
@@ -184,7 +225,7 @@ public class MongoDBAdd extends HttpServlet {
 
         track_info.insertOne(doc);
     }
-    
+
     // Method to fetch appropriate user and date for time reporting
     public List<String> FetchUser(String str1, String str2) {
 
@@ -201,20 +242,17 @@ public class MongoDBAdd extends HttpServlet {
             Document doc = cursor.next();
             String temp1 = ((String) doc.get((String) "User_ID"));
             String temp2 = ((String) doc.get((String) "Date"));
-            
+
             // Check for date and user ID
             if (temp1.equals(str1) && temp2.equals(str2)) {
                 user_tracker.add((String) doc.get("Date"));
                 user_tracker.add((String) doc.get("Time"));
                 user_tracker.add((String) doc.get("Movement"));
-//                user_tracker.add("\n");
-            } 
-//            else {
-//                user_tracker = null;
-//            }
+            }
         }
         return user_tracker;
     }
+
     //For user authentication
     public String Login(String str1, String str2) {
 
@@ -249,8 +287,8 @@ public class MongoDBAdd extends HttpServlet {
         }
         return message;
     }
-    
-    public void createLog(LogDetails log){
+
+    public void createLog(LogDetails log) {
         MongoDatabase db = DBConnection();
         //Appropriate collection accessed
         MongoCollection<Document> log_info = db.getCollection("log_info");
@@ -265,7 +303,7 @@ public class MongoDBAdd extends HttpServlet {
                 .append("ServerMethodCalled", log.getServerMethodCalled());
         log_info.insertOne(doc);
     }
-    
+
     public List<String> FetchAll() {
 
         MongoDatabase db = DBConnection();
@@ -283,11 +321,9 @@ public class MongoDBAdd extends HttpServlet {
             user_tracker.add((String) doc.get("Date"));
             user_tracker.add((String) doc.get("Time"));
             user_tracker.add((String) doc.get("Movement"));
-            
+
         }
         return user_tracker;
     }
-    
-    
 
 }
