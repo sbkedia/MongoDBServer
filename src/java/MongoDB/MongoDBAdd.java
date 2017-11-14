@@ -57,6 +57,13 @@ public class MongoDBAdd extends HttpServlet {
             PrintWriter out = response.getWriter();
             out.println(String.join(",", l1));// The resultant dataset
         }
+        
+        if  (check.equals("Operational")){
+            List<String> l3 = FetchAll();
+            PrintWriter out = response.getWriter();
+            out.println(l3.toString());
+            System.out.println(l3.toString());
+        }
 
         //When loging in - Authenticating the user
         if (StringParse.get(0).equals("Login")) {
@@ -258,5 +265,29 @@ public class MongoDBAdd extends HttpServlet {
                 .append("ServerMethodCalled", log.getServerMethodCalled());
         log_info.insertOne(doc);
     }
+    
+    public List<String> FetchAll() {
+
+        MongoDatabase db = DBConnection();
+        //Appropriate collection accessed
+        MongoCollection<Document> collection = db.getCollection("track_info");
+        List<Document> documents = new ArrayList<>();
+        List<String> user_tracker = new ArrayList<String>();
+        //Access the tracking information
+        collection.find().into(documents);
+
+        MongoCursor<Document> cursor = collection.find().iterator();
+        while (cursor.hasNext()) {
+            Document doc = cursor.next();
+            user_tracker.add((String) doc.get("User_ID"));
+            user_tracker.add((String) doc.get("Date"));
+            user_tracker.add((String) doc.get("Time"));
+            user_tracker.add((String) doc.get("Movement"));
+            
+        }
+        return user_tracker;
+    }
+    
+    
 
 }
