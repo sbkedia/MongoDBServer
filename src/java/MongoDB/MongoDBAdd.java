@@ -50,7 +50,7 @@ public class MongoDBAdd extends HttpServlet {
         // Get path info to invoke the appropriate method
 //        String check = request.getPathInfo().toString().substring(1);
         String check = request.getParameter("csvString");
-        List<String> StringParse = Arrays.asList(check.split("&"));
+        List<String> StringParse = Arrays.asList(check.split(","));
         LogDetails ld = new LogDetails();
         DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
         Date date = new Date();
@@ -94,12 +94,10 @@ public class MongoDBAdd extends HttpServlet {
         //When loging in - Authenticating the user
         if (StringParse.get(0).equals("Login")) {
             System.out.println("In Login");
-            String content = StringParse.get(1) + "&" + StringParse.get(2);
+            String content = StringParse.get(1) + "," + StringParse.get(2);
             String str1 = StringParse.get(1);
             String str2 = StringParse.get(2);
             String result = Login(str1, str2);
-            
-            System.out.println("Got result");
 
             // Create log
             ld.setUserID(StringParse.get(3));
