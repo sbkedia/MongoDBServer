@@ -27,6 +27,9 @@ import org.bson.Document;
 
 import com.mongodb.client.MongoCursor;
 import java.io.PrintWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * This the web service for our application There are two kinds of Get Requests -
@@ -83,13 +86,16 @@ public class MongoDBAdd extends HttpServlet {
         response.setStatus(200);
 
         UserInfo u = new UserInfo();
+        LogDetails ld = new LogDetails();
         Track t = new Track();
+        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+        Date date = new Date();
         // Parsing the path info to invoke the appropriate method
         List<String> StringParse = Arrays.asList(csvString.split(","));
 
         // When a new user registers
         if (StringParse.get(0).equals("AddUser")) {
-            // Parse to obtain the userID, First Name, Last Name, email, password, role
+            // Parse to obtain First Name, Last Name, email, password, role
             u.setFName(StringParse.get(1));
             u.setLName(StringParse.get(2));
             u.setEmail(StringParse.get(3));
@@ -97,6 +103,18 @@ public class MongoDBAdd extends HttpServlet {
             u.setRole(StringParse.get(5));
             // Add to MongoDB
             AddUser(u);
+            
+            // Create log
+            ld.setUserID(StringParse.get(6));
+            ld.setModel(StringParse.get(7));
+            ld.setManufacturer(StringParse.get(8));
+            ld.setVersionRelease(StringParse.get(9));
+            ld.setRequestType("Post");
+            ld.setContent(csvString);
+            ld.setTimestamp(dateFormat.format(date));
+            ld.setServerMethodCalled("AddUser");
+            
+//            createLog(ld);
         }
         // When a logged in user starts the time tracker
         if (StringParse.get(0).equals("AddTrack")) {
@@ -223,6 +241,22 @@ public class MongoDBAdd extends HttpServlet {
             }
         }
         return message;
+    }
+    
+    public void createLog(LogDetails log){
+        MongoDatabase db = DBConnection();
+        //Appropriate collection accessed
+        MongoCollection<Document> log_info = db.getCollection("log_info");
+        Document doc = new Document()
+                .append("UserID", log.getUserID())
+                .append("Model", log.getModel())
+                .append("Manufacturer", log.getManufacturer())
+                .append("Version_Release", log.getVersionRelease())
+                .append("Request_Type", log.getRequestType())
+                .append("Content", log.getContent())
+                .append("Timestamp", log.getTimestamp())
+                .append("ServerMethodCalled", log.getServerMethodCalled());
+        log_info.insertOne(doc);
     }
 
 }
