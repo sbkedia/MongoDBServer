@@ -79,6 +79,13 @@ public class MongoDBAdd extends HttpServlet {
             out.println(l3.toString());
             System.out.println(l3.toString());
         }
+        
+        if (check.equals("Log")) {
+            List<String> l4 = FetchLog();
+            PrintWriter out = response.getWriter();
+            out.println(l4.toString());
+            System.out.println(l4.toString());
+        }
 
         //When loging in - Authenticating the user
         if (StringParse.get(0).equals("Login")) {
@@ -325,5 +332,32 @@ public class MongoDBAdd extends HttpServlet {
         }
         return user_tracker;
     }
+    
+    public List<String> FetchLog() {
+
+        MongoDatabase db = DBConnection();
+        //Appropriate collection accessed
+        MongoCollection<Document> collection = db.getCollection("log_info");
+        List<Document> documents = new ArrayList<>();
+        List<String> log_tracker = new ArrayList<String>();
+        //Access the tracking information
+        collection.find().into(documents);
+
+        MongoCursor<Document> cursor = collection.find().iterator();
+        while (cursor.hasNext()) {
+            Document doc = cursor.next();
+            log_tracker.add((String) doc.get("UserID"));
+            log_tracker.add((String) doc.get("Model"));
+            log_tracker.add((String) doc.get("Manufacturer"));
+            log_tracker.add((String) doc.get("Version_Release"));
+            log_tracker.add((String) doc.get("Request_Type"));
+            log_tracker.add((String) doc.get("Content"));
+            log_tracker.add((String) doc.get("Timestamp"));
+            log_tracker.add((String) doc.get("ServerMethodCalled"));
+        }
+        return log_tracker;
+    }
+    
+    
 
 }
