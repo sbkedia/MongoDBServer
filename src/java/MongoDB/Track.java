@@ -1,13 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package MongoDB;
 
 /**
- *
- * @author Shruti
+ * This is used for defining the track information - We have four fields - UserID, Date, Time and Movement
  */
 public class Track {
 
@@ -19,7 +13,8 @@ public class Track {
             this.Time = Time;
             this.Movement = Movement;
         }
-
+        
+        /*Defining Getter and Setter methods*/
         public void setuserID(String user_ID) {
             this.user_ID = user_ID;
         }

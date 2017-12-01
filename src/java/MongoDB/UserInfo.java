@@ -1,14 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package MongoDB;
 
-/**
- *
- * @author Shruti
- */
+/*Defining User Info class which has - User ID, First Name, Last Name, Email, Password, Role*/
+
+
 public class UserInfo {
     
     private String user_ID, First_Name, Last_Name, Email, Password, Role;
@@ -21,7 +15,7 @@ public class UserInfo {
             this.Password = "";
             this.Role = "";
         }
-
+        // We are defining the Setter and Getter methods
         public void setUserID(String user_ID) {
             this.user_ID = user_ID;
         }

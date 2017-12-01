@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package MongoDB;
 
 import com.mongodb.MongoClient;
@@ -36,6 +32,7 @@ import java.util.Date;
  * - Login Authentication and Time Tracking screen of the algorithm There are
  * two kinds of Post Requests - Add User after registration and add tracking
  * information from the application
+ * Source - http://mongodb.github.io/mongo-java-driver/3.4/driver/getting-started/quick-start/
  */
 @WebServlet(name = "MongoDBAdd", urlPatterns = {"/MongoDBAdd/"})
 public class MongoDBAdd extends HttpServlet {
@@ -61,7 +58,6 @@ public class MongoDBAdd extends HttpServlet {
             String str1 = StringParse.get(1);
             String str2 = StringParse.get(2);
             List<String> l1 = FetchUser(str1, str2);
-
             // Create log
             ld.setUserID(StringParse.get(3));
             ld.setModel(StringParse.get(4));
@@ -72,11 +68,30 @@ public class MongoDBAdd extends HttpServlet {
             ld.setTimestamp(dateFormat.format(date));
             ld.setServerMethodCalled("FetchUser");
             createLog(ld);
-
             PrintWriter out = response.getWriter();
-            out.println(String.join(",", l1));// The resultant dataset
+            out.println(String.join(",", l1));// The resultant dataset                       
         }
-
+        
+        // When time tracking - Get the appropriate subset of data for the Manager from MongoDB
+        if (StringParse.get(0).equals("FetchManager")) {
+            String content = StringParse.get(1);
+            String str1 = StringParse.get(1);
+            List<String> l1 = FetchManager(str1);
+            // Create log
+            ld.setUserID(StringParse.get(3));
+            ld.setModel(StringParse.get(4));
+            ld.setManufacturer(StringParse.get(5));
+            ld.setVersionRelease(StringParse.get(6));
+            ld.setRequestType("Get");
+            ld.setContent(content);
+            ld.setTimestamp(dateFormat.format(date));
+            ld.setServerMethodCalled("FetchManager");
+            createLog(ld);
+            PrintWriter out = response.getWriter();
+            out.println(String.join(",", l1));// The resultant dataset                       
+        }
+                
+        // for dashboard purpose
         if (check.equals("Operational")) {
             List<String> l3 = FetchAll();
             PrintWriter out = response.getWriter();
@@ -84,6 +99,7 @@ public class MongoDBAdd extends HttpServlet {
             System.out.println(l3.toString());
         }
         
+        //for dashboard purpose
         if (check.equals("Log")) {
             List<String> l4 = FetchLog();
             PrintWriter out = response.getWriter();
@@ -98,6 +114,7 @@ public class MongoDBAdd extends HttpServlet {
             String str1 = StringParse.get(1);
             String str2 = StringParse.get(2);
             String result = Login(str1, str2);
+            String role=LoginRole(str1);// Get user role
 
             // Create log
             ld.setUserID(StringParse.get(3));
@@ -112,7 +129,7 @@ public class MongoDBAdd extends HttpServlet {
             
             //Send back to client
             PrintWriter out = response.getWriter();
-            out.println(result);// Sending the appropriate message
+            out.println(result+","+role);// Sending the appropriate message
 
         }
     }
@@ -120,7 +137,7 @@ public class MongoDBAdd extends HttpServlet {
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        //
+        
         System.out.println("InPost");
         BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream()));
         String csvString = br.readLine();
@@ -264,6 +281,35 @@ public class MongoDBAdd extends HttpServlet {
         }
         return user_tracker;
     }
+    
+     // Method to fetch appropriate user and date for time reporting
+    public List<String> FetchManager(String str2) {
+
+        MongoDatabase db = DBConnection();
+        //Appropriate collection accessed
+        MongoCollection<Document> collection = db.getCollection("track_info");
+        List<Document> documents = new ArrayList<>();
+        List<String> user_tracker = new ArrayList<String>();
+        //Access the tracking information
+        collection.find().into(documents);
+
+        MongoCursor<Document> cursor = collection.find().iterator();
+        while (cursor.hasNext()) {
+            Document doc = cursor.next();
+           String temp2 = ((String) doc.get((String) "Date"));
+
+            // Check for date
+            if (temp2.equals(str2)) {
+                
+                user_tracker.add((String) doc.get("User_ID"));
+                user_tracker.add((String) doc.get("Date"));
+                user_tracker.add((String) doc.get("Time"));
+                user_tracker.add((String) doc.get("Movement"));
+            }
+        }
+        return user_tracker;
+    }
+    
 
     //For user authentication
     public String Login(String str1, String str2) {
@@ -282,7 +328,6 @@ public class MongoDBAdd extends HttpServlet {
             //Get the password if email exists
             if (temp1.equals(str1)) {
                 pswd = ((String) doc.get((String) "Password"));
-
             }
 
         }
@@ -299,7 +344,34 @@ public class MongoDBAdd extends HttpServlet {
         }
         return message;
     }
+    
+        //For user authentication
+    public String LoginRole(String str1) {
 
+        MongoDatabase db = DBConnection();
+        //Access user information
+        MongoCollection<Document> collection = db.getCollection("user_info");
+        List<Document> documents = new ArrayList<>();
+        collection.find().into(documents);
+        String role = null;
+        MongoCursor<Document> cursor = collection.find().iterator();
+        while (cursor.hasNext()) {
+            Document doc = cursor.next();
+            String temp1 = ((String) doc.get((String) "Email"));
+            //Get the role if email exists
+            if (temp1.equals(str1)) {
+                role = ((String) doc.get((String) "Role"));
+            }
+            else{
+               role=null; 
+            }
+        }
+    return role;
+    }
+    
+    
+    
+    //creater the server logs
     public void createLog(LogDetails log) {
         MongoDatabase db = DBConnection();
         //Appropriate collection accessed
@@ -316,6 +388,7 @@ public class MongoDBAdd extends HttpServlet {
         log_info.insertOne(doc);
     }
 
+    //Query and get all info from mongoDB collection track_info
     public List<String> FetchAll() {
 
         MongoDatabase db = DBConnection();
@@ -338,6 +411,7 @@ public class MongoDBAdd extends HttpServlet {
         return user_tracker;
     }
     
+    // Method to fetch the server log information
     public List<String> FetchLog() {
 
         MongoDatabase db = DBConnection();
