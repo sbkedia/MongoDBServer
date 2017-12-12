@@ -358,9 +358,12 @@ public class MongoDBAdd extends HttpServlet {
         while (cursor.hasNext()) {
             Document doc = cursor.next();
             String temp1 = ((String) doc.get((String) "Email"));
+            System.out.println(temp1);
             //Get the role if email exists
+            
             if (temp1.equals(str1)) {
                 role = ((String) doc.get((String) "Role"));
+                return role;
             }
             else{
                role=null; 
